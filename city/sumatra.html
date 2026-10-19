@@ -12,12 +12,75 @@
     <link rel="apple-touch-icon" href="../icons/icon-180.png" />
     <link rel="icon" type="image/png" href="../icons/icon-192.png" />
     <title>Daisy &amp; Coral: Sumatra Fire</title>
-    <script type="module" crossorigin src="./assets/sumatra-CM3aErFj.js"></script>
+    <script type="module" crossorigin src="./assets/sumatra-CRgBLgA0.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/fireI18n-DrQ4bXmj.js">
     <link rel="stylesheet" crossorigin href="./assets/fireI18n-B8SbBAOC.css">
   </head>
   <body>
     <canvas id="game"></canvas>
     <div id="ui"></div>
+    <div id="boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#8fd3ff;font:700 22px system-ui,sans-serif;color:#24405a;text-align:center;z-index:9999">
+      <div style="font-size:64px">⏳</div>
+      <div id="boot-msg"></div>
+    </div>
+    <script>
+      // Before the game loads: a waiting screen, and if loading goes wrong a big reload button
+      // (with the reason underneath, so a screenshot tells us what broke).
+      (function () {
+        var ko = /^ko/.test(navigator.language || '');
+        try {
+          var s = JSON.parse(localStorage.getItem('daisy-coral.save.v1') || '{}');
+          if (s.lang) ko = s.lang === 'ko';
+        } catch (e) {}
+        var msg = document.getElementById('boot-msg');
+        msg.textContent = ko ? '불러오는 중...' : 'Loading...';
+        var failed = false;
+        function again() {
+          var q = new URLSearchParams(location.search);
+          q.set('r', String(Date.now()));
+          return location.pathname + '?' + q.toString();
+        }
+        function fail(why) {
+          if (failed || window.cityBooted) return;
+          failed = true;
+          // Once per visit, quietly try again (an old page may be asking for files that were replaced).
+          try {
+            if (!sessionStorage.getItem('boot-retry')) {
+              sessionStorage.setItem('boot-retry', '1');
+              location.replace(again());
+              return;
+            }
+          } catch (e) {}
+          var box = document.getElementById('boot');
+          box.innerHTML = '';
+          var big = document.createElement('div');
+          big.style.fontSize = '64px';
+          big.textContent = '😵';
+          var say = document.createElement('div');
+          say.textContent = ko ? '화면을 못 불러왔어요' : "The game didn't load";
+          var btn = document.createElement('button');
+          btn.textContent = ko ? '🔄 다시 불러오기' : '🔄 Try again';
+          btn.style.cssText = 'font:900 26px system-ui,sans-serif;padding:18px 34px;border:0;border-radius:24px;background:#ff9a2e;color:#fff';
+          btn.onclick = function () {
+            location.replace(again());
+          };
+          var small = document.createElement('div');
+          small.style.cssText = 'font:400 13px system-ui,sans-serif;opacity:0.7;max-width:80vw;word-break:break-all';
+          small.textContent = String(why || '') + ' · ' + navigator.userAgent;
+          box.append(big, say, btn, small);
+        }
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (t && t !== window && (t.src || t.href)) fail('load ' + (t.src || t.href));
+          else fail(e.message + (e.filename ? ' @' + e.filename.split('/').pop() + ':' + e.lineno : ''));
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) {
+          fail(e.reason && (e.reason.message || e.reason));
+        });
+        setTimeout(function () {
+          fail('timeout');
+        }, 60000);
+      })();
+    </script>
   </body>
 </html>
