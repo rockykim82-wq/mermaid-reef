@@ -12,14 +12,52 @@
     <link rel="apple-touch-icon" href="../icons/icon-180.png" />
     <link rel="icon" type="image/png" href="../icons/icon-192.png" />
     <title>Daisy &amp; Coral: Sumatra Fire</title>
-    <script type="module" crossorigin src="./assets/sumatra-Cr__Ci5K.js"></script>
+    <script type="module" crossorigin src="./assets/sumatra-C_cgLkGa.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/preload-helper-mg6Z-sIv.js">
   </head>
   <body>
     <canvas id="game"></canvas>
     <div id="ui"></div>
-    <div id="boot" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#8fd3ff;font:700 22px system-ui,sans-serif;color:#24405a;text-align:center;z-index:9999">
-      <div style="font-size:64px">⏳</div>
+    <!-- The waiting screen: the fire helicopter flying over the sea toward Sumatra, all blocks, moving
+         with CSS alone (it keeps going while the forest is being built). -->
+    <style>
+      #boot { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; overflow: hidden; background: linear-gradient(#7cc4f2 0%, #b8e2ff 62%, #2e86b8 62%, #1f6d9a 100%); font: 900 24px system-ui, sans-serif; color: #1d3a52; text-align: center; }
+      #boot-msg { position: relative; padding: 10px 22px; background: #f2d59a; border: 4px solid #3a2614; box-shadow: inset 4px 4px 0 rgba(255,255,255,.5), inset -4px -4px 0 rgba(120,72,24,.35), 0 6px 0 rgba(0,0,0,.3); color: #3a2614; }
+      .b-heli { position: relative; width: 200px; height: 130px; animation: b-bob 1.1s ease-in-out infinite alternate; }
+      .b-heli div { position: absolute; }
+      .b-body { left: 50px; top: 40px; width: 96px; height: 50px; background: #d8202a; box-shadow: inset 0 -10px 0 #a3141c; }
+      .b-stripe { left: 50px; top: 66px; width: 96px; height: 8px; background: #f4f4f4; }
+      .b-glass { left: 50px; top: 46px; width: 30px; height: 22px; background: #8fd3ff; box-shadow: inset 6px 6px 0 #d8f2ff; }
+      .b-tail { left: 146px; top: 52px; width: 48px; height: 14px; background: #d8202a; }
+      .b-fin { left: 184px; top: 34px; width: 12px; height: 30px; background: #a3141c; }
+      .b-mast { left: 92px; top: 30px; width: 10px; height: 12px; background: #2a2a2a; }
+      .b-rotor { left: 22px; top: 24px; width: 150px; height: 8px; background: #2a2a2a; animation: b-spin 0.16s linear infinite; }
+      .b-skid { left: 56px; top: 98px; width: 86px; height: 6px; background: #2a2a2a; }
+      .b-leg1, .b-leg2 { top: 88px; width: 6px; height: 12px; background: #2a2a2a; }
+      .b-leg1 { left: 70px; } .b-leg2 { left: 124px; }
+      .b-rope { left: 97px; top: 104px; width: 3px; height: 16px; background: #2a2a2a; }
+      .b-bucket { left: 88px; top: 118px; width: 22px; height: 14px; background: #f07a1e; box-shadow: inset 0 4px 0 #5fb8f0; }
+      .b-cloud { position: absolute; width: 120px; height: 34px; background: #fff; box-shadow: 24px -18px 0 -2px #fff, 60px -10px 0 #fff, 0 6px 0 rgba(0,0,0,.06); animation: b-drift 7s linear infinite; }
+      .b-c1 { top: 12%; } .b-c2 { top: 26%; animation-delay: -3.5s; transform: scale(.7); } .b-c3 { top: 44%; animation-delay: -5.5s; }
+      .b-wave { position: absolute; top: 66%; width: 60px; height: 8px; background: rgba(255,255,255,.55); animation: b-drift 3.2s linear infinite; }
+      .b-w2 { top: 76%; animation-delay: -1.1s; } .b-w3 { top: 86%; animation-delay: -2.2s; }
+      @keyframes b-bob { from { transform: translateY(-8px) rotate(-3deg); } to { transform: translateY(8px) rotate(-6deg); } }
+      @keyframes b-spin { 50% { transform: scaleX(0.25); } }
+      @keyframes b-drift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+    </style>
+    <div id="boot">
+      <div class="b-cloud b-c1"></div>
+      <div class="b-cloud b-c2"></div>
+      <div class="b-cloud b-c3"></div>
+      <div class="b-wave"></div>
+      <div class="b-wave b-w2"></div>
+      <div class="b-wave b-w3"></div>
+      <div class="b-heli">
+        <div class="b-rope"></div><div class="b-bucket"></div>
+        <div class="b-leg1"></div><div class="b-leg2"></div><div class="b-skid"></div>
+        <div class="b-tail"></div><div class="b-fin"></div><div class="b-body"></div><div class="b-stripe"></div><div class="b-glass"></div>
+        <div class="b-mast"></div><div class="b-rotor"></div>
+      </div>
       <div id="boot-msg"></div>
     </div>
     <script>
@@ -32,7 +70,7 @@
           if (s.lang) ko = s.lang === 'ko';
         } catch (e) {}
         var msg = document.getElementById('boot-msg');
-        msg.textContent = ko ? '불러오는 중...' : 'Loading...';
+        msg.textContent = ko ? '🚁 수마트라로 날아가요...' : '🚁 Flying to Sumatra...';
         var failed = false;
         function again() {
           var q = new URLSearchParams(location.search);
